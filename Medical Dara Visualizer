@@ -1,0 +1,127 @@
+# ---------------------------------------------------------------
+# NOTE:
+# To run this script, you must have the dataset file "medical_examination.csv"
+# in the same directory as this Python file.
+# You can download it from:
+# https://www.kaggle.com/datasets/titovartemiy/medical-data
+# or from the FreeCodeCamp Data Analysis Project resources.
+# ---------------------------------------------------------------
+# This program analyzes medical data to visualize categorical and
+# correlation relationships using Seaborn and Matplotlib.
+# ---------------------------------------------------------------
+
+import pandas as pd
+import seaborn as sb
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ---------------------------------------------------------------
+# Load and preprocess the dataset
+# ---------------------------------------------------------------
+df = pd.read_csv("medical_examination.csv")
+
+# Add 'overweight' column (1 if BMI > 25, else 0)
+df["overweight"] = (df["weight"] / ((df["height"] / 100) ** 2)).apply(lambda x: 1 if x > 25 else 0)
+
+# Normalize 'cholesterol' and 'gluc' values:
+# 0 means normal, 1 means above normal
+df["cholesterol"] = df["cholesterol"].apply(lambda x: 0 if x == 1 else 1)
+df["gluc"] = df["gluc"].apply(lambda x: 0 if x == 1 else 1)
+
+
+# ---------------------------------------------------------------
+# Function to draw categorical plot
+# ---------------------------------------------------------------
+def draw_cat_plot():
+    """
+    Creates a categorical plot (bar chart) showing counts of features
+    grouped by 'cardio' status (heart disease indicator).
+    """
+    # Reshape data for categorical plot
+    df_cat = pd.melt(
+        df,
+        id_vars=["cardio"],
+        value_vars=["cholesterol", "gluc", "smoke", "alco", "active", "overweight"]
+    )
+
+    # Add 'total' column for counting
+    df_cat["total"] = 1
+
+    # Group by cardio, variable, and value to get counts
+    df_cat = df_cat.groupby(["cardio", "variable", "value"], as_index=False).count()
+
+    # Create the categorical plot
+    fig = sb.catplot(
+        x="variable",
+        y="total",
+        hue="value",
+        col="cardio",
+        data=df_cat,
+        kind="bar"
+    ).figure
+
+    # Save figure
+    fig.savefig("catplot.png")
+
+    return fig
+
+
+# ---------------------------------------------------------------
+# Function to draw heatmap
+# ---------------------------------------------------------------
+def draw_heat_map():
+    """
+    Cleans the data and draws a correlation heatmap showing the relationships
+    between various medical measurements.
+    """
+    # Clean the data
+    df_heat = df[
+        (df["ap_lo"] <= df["ap_hi"]) &  # diastolic <= systolic
+        (df["height"] >= df["height"].quantile(0.025)) &
+        (df["height"] <= df["height"].quantile(0.975)) &
+        (df["weight"] >= df["weight"].quantile(0.025)) &
+        (df["weight"] <= df["weight"].quantile(0.975))
+    ]
+
+    # Compute correlation matrix
+    corr = df_heat.corr()
+
+    # Generate a mask for the upper triangle
+    mask = np.triu(np.ones_like(corr, dtype=bool))
+
+    # Set up the matplotlib figure
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    # Draw the heatmap
+    sb.heatmap(
+        corr,
+        mask=mask,
+        annot=True,
+        fmt=".1f",
+        center=0,
+        vmax=0.3,
+        vmin=-0.1,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.5}
+    )
+
+    # Save figure
+    fig.savefig("heatmap.png")
+
+    return fig
+
+
+# ---------------------------------------------------------------
+# Driver code: runs both visualizations when the script is executed
+# ---------------------------------------------------------------
+if __name__ == "__main__":
+    print("Generating categorical plot...")
+    draw_cat_plot()
+    print("Saved as catplot.png")
+
+    print("\nGenerating heatmap...")
+    draw_heat_map()
+    print("Saved as heatmap.png")
+
+    print("\nAll plots generated successfully!")
