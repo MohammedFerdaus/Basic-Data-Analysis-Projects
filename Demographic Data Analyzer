@@ -1,0 +1,95 @@
+# ---------------------------------------------------------------
+# NOTE:
+# To run this script, you must have the dataset file "adult.data.csv"
+# in the same directory as this Python file.
+# You can download it from:
+# https://archive.ics.uci.edu/ml/datasets/adult
+# ---------------------------------------------------------------
+
+import pandas as pd
+
+def calculate_demographic_data(print_data=True):
+    # Read dataset
+    df = pd.read_csv("adult.data.csv")
+
+    # 1. Number of each race
+    race_count = df["race"].value_counts()
+
+    # 2. Average age of men
+    average_age_men = df[df["sex"] == "Male"]["age"].mean().round(1)
+
+    # 3. Percentage of people with a Bachelor's degree
+    num_bachelors = len(df[df["education"] == "Bachelors"])
+    total_num = len(df)
+    percentage_bachelors = round(num_bachelors / total_num * 100, 1)
+
+    # 4. Separate higher and lower education groups
+    higher_education = df[df["education"].isin(["Bachelors", "Masters", "Doctorate"])]
+    lower_education = df[~df["education"].isin(["Bachelors", "Masters", "Doctorate"])]
+
+    # 5. Percentage with salary >50K for each education group
+    higher_education_rich = round(
+        len(higher_education[higher_education["salary"] == ">50K"]) / len(higher_education) * 100, 1
+    )
+    lower_education_rich = round(
+        len(lower_education[lower_education["salary"] == ">50K"]) / len(lower_education) * 100, 1
+    )
+
+    # 6. Minimum number of work hours per week
+    min_work_hours = df["hours-per-week"].min()
+
+    # 7. Percentage of rich among those who work the minimum number of hours
+    num_min_workers = df[df["hours-per-week"] == min_work_hours]
+    rich_percentage = round(
+        len(num_min_workers[num_min_workers["salary"] == ">50K"]) / len(num_min_workers) * 100, 1
+    )
+
+    # 8. Country with highest percentage of rich people
+    country_count = df["native-country"].value_counts()
+    country_rich_count = df[df["salary"] == ">50K"]["native-country"].value_counts()
+    rich_country_percentage = (country_rich_count / country_count * 100).dropna()
+
+    highest_earning_country = rich_country_percentage.idxmax()
+    highest_earning_country_percentage = round(rich_country_percentage.max(), 1)
+
+    # 9. Top occupation for those who earn >50K in India
+    people_of_country = df[(df["native-country"] == "India") & (df["salary"] == ">50K")]
+    top_in_occupation = people_of_country["occupation"].value_counts().idxmax()
+
+    # Store all results in a dictionary
+    result = {
+        "race_count": race_count,
+        "average_age_men": average_age_men,
+        "percentage_bachelors": percentage_bachelors,
+        "higher_education_rich": higher_education_rich,
+        "lower_education_rich": lower_education_rich,
+        "min_work_hours": min_work_hours,
+        "rich_percentage": rich_percentage,
+        "highest_earning_country": highest_earning_country,
+        "highest_earning_country_percentage": highest_earning_country_percentage,
+        "top_IN_occupation": top_in_occupation,
+    }
+
+    # Optionally print results in a readable format
+    if print_data:
+        print("Number of each race:\n", race_count)
+        print("\nAverage age of men:", average_age_men)
+        print(f"\nPercentage with Bachelors degrees: {percentage_bachelors}%")
+        print(f"\nPercentage with higher education that earn >50K: {higher_education_rich}%")
+        print(f"Percentage without higher education that earn >50K: {lower_education_rich}%")
+        print(f"\nMinimum work hours: {min_work_hours}")
+        print(f"Percentage of rich among those who work fewest hours: {rich_percentage}%")
+        print(f"\nCountry with highest percentage of rich: {highest_earning_country}")
+        print(f"Highest percentage of rich people in country: {highest_earning_country_percentage}%")
+        print(f"\nTop occupations in India for those earning >50K: {top_in_occupation}")
+
+    return result
+
+
+# ---------------------------------------------------------------
+# Run the function when this script is executed directly
+# ---------------------------------------------------------------
+if __name__ == "__main__":
+    data = calculate_demographic_data()
+    print("\nReturned data dictionary:\n")
+    print(data)
