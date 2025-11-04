@@ -6,18 +6,15 @@
 # https://www.kaggle.com/datasets/titovartemiy/medical-data
 # or from the FreeCodeCamp Data Analysis Project resources.
 # ---------------------------------------------------------------
+
 # This program analyzes medical data to visualize categorical and
 # correlation relationships using Seaborn and Matplotlib.
-# ---------------------------------------------------------------
-
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt
 import numpy as np
 
-# ---------------------------------------------------------------
 # Load and preprocess the dataset
-# ---------------------------------------------------------------
 df = pd.read_csv("medical_examination.csv")
 
 # Add 'overweight' column (1 if BMI > 25, else 0)
@@ -29,9 +26,7 @@ df["cholesterol"] = df["cholesterol"].apply(lambda x: 0 if x == 1 else 1)
 df["gluc"] = df["gluc"].apply(lambda x: 0 if x == 1 else 1)
 
 
-# ---------------------------------------------------------------
 # Function to draw categorical plot
-# ---------------------------------------------------------------
 def draw_cat_plot():
     """
     Creates a categorical plot (bar chart) showing counts of features
@@ -65,10 +60,7 @@ def draw_cat_plot():
 
     return fig
 
-
-# ---------------------------------------------------------------
 # Function to draw heatmap
-# ---------------------------------------------------------------
 def draw_heat_map():
     """
     Cleans the data and draws a correlation heatmap showing the relationships
@@ -108,20 +100,9 @@ def draw_heat_map():
 
     # Save figure
     fig.savefig("heatmap.png")
-
     return fig
 
-
-# ---------------------------------------------------------------
 # Driver code: runs both visualizations when the script is executed
-# ---------------------------------------------------------------
 if __name__ == "__main__":
-    print("Generating categorical plot...")
     draw_cat_plot()
-    print("Saved as catplot.png")
-
-    print("\nGenerating heatmap...")
     draw_heat_map()
-    print("Saved as heatmap.png")
-
-    print("\nAll plots generated successfully!")
