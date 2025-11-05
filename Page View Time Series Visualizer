@@ -1,0 +1,118 @@
+# ---------------------------------------------------------------
+# NOTE:
+# To run this script, you must have the dataset file "fcc-forum-pageviews.csv"
+# in the same directory as this Python file.
+# ---------------------------------------------------------------
+
+# This program analyzes forum page view data using Pandas, Seaborn, and Matplotlib
+# to visualize long-term usage trends and seasonal patterns through line,
+# bar, and box plots.
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sb
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
+# Load and clean the dataset
+df = pd.read_csv("fcc-forum-pageviews.csv", parse_dates=["date"], index_col="date")
+
+# Remove the top and bottom 2.5% of page view data to eliminate outliers
+df = df[
+    (df["value"] >= df["value"].quantile(0.025)) &
+    (df["value"] <= df["value"].quantile(0.975))
+]
+
+# Function to draw line plot
+def draw_line_plot():
+    """
+    Draws a line plot showing daily forum page views
+    between May 2016 and December 2019.
+    """
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(df.index, df["value"], "r", linewidth=1)
+
+    # Set plot title and labels
+    ax.set_title("Daily Forum Page Views 5/2016–12/2019")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Page Views")
+
+    # Save the figure
+    fig.savefig("line_plot.png")
+    return fig
+
+# Function to draw bar plot
+def draw_bar_plot():
+    """
+    Draws a bar plot showing the average daily page views for each month,
+    grouped by year.
+    """
+    # Prepare data for bar plot
+    df_bar = df.copy()
+    df_bar["year"] = df_bar.index.year
+    df_bar["month"] = df_bar.index.month
+
+    # Group data by year and month
+    df_bar = df_bar.groupby(["year", "month"])["value"].mean().unstack()
+
+    # Create bar plot
+    fig = df_bar.plot.bar(
+        figsize=(13, 6),
+        legend=True
+    ).figure
+
+    plt.xlabel("Years")
+    plt.ylabel("Average Page Views")
+
+    # Set legend for months
+    plt.legend([
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ], title="Months")
+
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+
+    # Save the figure
+    fig.savefig("bar_plot.png")
+    return fig
+
+# Function to draw box plots
+def draw_box_plots():
+    """
+    Draws two box plots:
+    - Year-wise box plot to show overall trend.
+    - Month-wise box plot to show seasonal patterns.
+    """
+    # Prepare data
+    df_box = df.copy().reset_index()
+    df_box["year"] = df_box["date"].dt.year
+    df_box["month"] = df_box["date"].dt.strftime("%b")
+    df_box["month_num"] = df_box["date"].dt.month
+
+    # Sort months in correct order
+    df_box = df_box.sort_values("month_num")
+
+    # Create figure and subplots
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(15, 6))
+
+    # Year-wise box plot
+    sb.boxplot(x="year", y="value", data=df_box, ax=axes[0])
+    axes[0].set_title("Year-wise Box Plot (Trend)")
+    axes[0].set_xlabel("Year")
+    axes[0].set_ylabel("Page Views")
+
+    # Month-wise box plot
+    sb.boxplot(x="month", y="value", data=df_box, ax=axes[1])
+    axes[1].set_title("Month-wise Box Plot (Seasonality)")
+    axes[1].set_xlabel("Month")
+    axes[1].set_ylabel("Page Views")
+
+    fig.tight_layout()
+    fig.savefig("box_plot.png")
+    return fig
+
+# Driver code: runs all visualizations when the script is executed
+if __name__ == "__main__":
+    draw_line_plot()
+    draw_bar_plot()
+    draw_box_plots()
